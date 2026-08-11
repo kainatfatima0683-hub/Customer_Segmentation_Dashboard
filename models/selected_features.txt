@@ -1,0 +1,15 @@
+Income
+Age
+Total_Spend
+Recency
+Children
+NumWebPurchases
+NumStorePurchases
+NumCatalogPurchases
+NumWebVisitsMonth
+NumDealsPurchases
+AcceptedCmp1
+AcceptedCmp2
+AcceptedCmp3
+AcceptedCmp4
+AcceptedCmp5
