@@ -2,27 +2,33 @@ import streamlit as st
 import pandas as pd
 import pickle
 import joblib
+import plotly.express as px
 
-# -----------------------------
-# Page Configuration
-# -----------------------------
+
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
+
 st.set_page_config(
     page_title="Customer Segmentation Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# -----------------------------
-# Load Dataset
-# -----------------------------
+
+# =========================================================
+# LOAD DATA
+# =========================================================
+
 @st.cache_data
 def load_data():
     return pd.read_csv("data/cleaned_final.csv")
 
 
-# -----------------------------
-# Load Selected Features
-# -----------------------------
+# =========================================================
+# LOAD SELECTED FEATURES
+# =========================================================
+
 @st.cache_data
 def load_features():
     with open("models/selected_features.txt", "r") as file:
@@ -30,9 +36,10 @@ def load_features():
     return features
 
 
-# -----------------------------
-# Load Scaler
-# -----------------------------
+# =========================================================
+# LOAD SCALER
+# =========================================================
+
 @st.cache_resource
 def load_scaler():
     try:
@@ -42,9 +49,10 @@ def load_scaler():
             return pickle.load(file)
 
 
-# -----------------------------
-# Load K-Means Model
-# -----------------------------
+# =========================================================
+# LOAD K-MEANS MODEL
+# =========================================================
+
 @st.cache_resource
 def load_model():
     try:
@@ -54,10 +62,12 @@ def load_model():
             return pickle.load(file)
 
 
-# -----------------------------
-# Load Everything
-# -----------------------------
+# =========================================================
+# LOAD EVERYTHING
+# =========================================================
+
 try:
+
     df = load_data()
     selected_features = load_features()
     scaler = load_scaler()
@@ -66,6 +76,7 @@ try:
     # Generate cluster predictions
     X = df[selected_features]
     X_scaled = scaler.transform(X)
+
     df["Cluster"] = kmeans.predict(X_scaled)
 
     # Segment names
@@ -81,13 +92,15 @@ try:
     model_loaded = True
 
 except Exception as e:
+
     model_loaded = False
     error_message = str(e)
 
 
-# -----------------------------
-# Sidebar Navigation
-# -----------------------------
+# =========================================================
+# SIDEBAR NAVIGATION
+# =========================================================
+
 st.sidebar.title("📊 Navigation")
 
 page = st.sidebar.radio(
@@ -104,8 +117,79 @@ page = st.sidebar.radio(
 
 
 # =========================================================
+# SIDEBAR FILTERS
+# =========================================================
+
+if model_loaded:
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔎 Filters")
+
+    # Segment filter
+    segment_options = ["All"] + sorted(
+        df["Segment"].dropna().unique().tolist()
+    )
+
+    selected_segment = st.sidebar.selectbox(
+        "Select Segment",
+        segment_options
+    )
+
+    # Age filter
+    if "Age" in df.columns:
+
+        min_age = int(df["Age"].min())
+        max_age = int(df["Age"].max())
+
+        age_range = st.sidebar.slider(
+            "Age Range",
+            min_value=min_age,
+            max_value=max_age,
+            value=(min_age, max_age)
+        )
+
+    # Income filter
+    if "Income" in df.columns:
+
+        min_income = float(df["Income"].min())
+        max_income = float(df["Income"].max())
+
+        income_range = st.sidebar.slider(
+            "Income Range",
+            min_value=min_income,
+            max_value=max_income,
+            value=(min_income, max_income)
+        )
+
+    # Apply filters
+    filtered_df = df.copy()
+
+    if selected_segment != "All":
+        filtered_df = filtered_df[
+            filtered_df["Segment"] == selected_segment
+        ]
+
+    if "Age" in filtered_df.columns:
+        filtered_df = filtered_df[
+            (filtered_df["Age"] >= age_range[0]) &
+            (filtered_df["Age"] <= age_range[1])
+        ]
+
+    if "Income" in filtered_df.columns:
+        filtered_df = filtered_df[
+            (filtered_df["Income"] >= income_range[0]) &
+            (filtered_df["Income"] <= income_range[1])
+        ]
+
+else:
+
+    filtered_df = pd.DataFrame()
+
+
+# =========================================================
 # HOME
 # =========================================================
+
 if page == "Home":
 
     st.title("📊 Customer Segmentation Dashboard")
@@ -116,6 +200,7 @@ if page == "Home":
 
     if model_loaded:
 
+        # KPI CARDS
         col1, col2, col3, col4 = st.columns(4)
 
         col1.metric(
@@ -124,8 +209,8 @@ if page == "Home":
         )
 
         col2.metric(
-            "Total Features",
-            df.shape[1]
+            "Filtered Customers",
+            len(filtered_df)
         )
 
         col3.metric(
@@ -142,10 +227,49 @@ if page == "Home":
             "Dataset, scaler and K-Means model loaded successfully."
         )
 
-        st.subheader("Final Dataset Preview")
+        # -------------------------------------------------
+        # SEGMENT DISTRIBUTION
+        # -------------------------------------------------
+
+        st.subheader("📈 Customer Segment Distribution")
+
+        segment_counts = (
+            filtered_df["Segment"]
+            .value_counts()
+            .reset_index()
+        )
+
+        segment_counts.columns = [
+            "Segment",
+            "Customers"
+        ]
+
+        fig = px.bar(
+            segment_counts,
+            x="Segment",
+            y="Customers",
+            title="Customers by Segment",
+            text="Customers"
+        )
+
+        fig.update_layout(
+            xaxis_title="Customer Segment",
+            yaxis_title="Number of Customers"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        # -------------------------------------------------
+        # DATASET PREVIEW
+        # -------------------------------------------------
+
+        st.subheader("📋 Dataset Preview")
 
         st.dataframe(
-            df.head(),
+            filtered_df.head(10),
             use_container_width=True
         )
 
@@ -159,58 +283,26 @@ if page == "Home":
 # =========================================================
 # CUSTOMER SEGMENTS
 # =========================================================
+
 elif page == "Customer Segments":
 
     st.title("👥 Customer Segments")
 
     if model_loaded:
 
-        segment_counts = (
-            df["Segment"]
-            .value_counts()
-            .reset_index()
-        )
-
-        segment_counts.columns = [
-            "Segment",
-            "Customers"
-        ]
-
-        st.dataframe(
-            segment_counts,
-            use_container_width=True
-        )
-
-        st.subheader("Segment Distribution")
-
-        st.bar_chart(
-            segment_counts.set_index("Segment")
-        )
-
-    else:
-        st.error(error_message)
-
-
-# =========================================================
-# SEGMENT ANALYSIS
-# =========================================================
-elif page == "Segment Analysis":
-
-    st.title("📊 Segment Analysis")
-
-    if model_loaded:
-
-        st.subheader("Customer Distribution")
+        st.subheader("Segment Summary")
 
         segment_summary = (
-            df.groupby("Segment")
+            filtered_df
+            .groupby("Segment")
             .size()
             .reset_index(name="Customers")
         )
 
         segment_summary["Percentage"] = (
             segment_summary["Customers"]
-            / len(df) * 100
+            / len(filtered_df)
+            * 100
         ).round(2)
 
         st.dataframe(
@@ -218,35 +310,181 @@ elif page == "Segment Analysis":
             use_container_width=True
         )
 
-        if "Income" in df.columns:
-            st.subheader("Average Income by Segment")
+        # -------------------------------------------------
+        # PIE CHART
+        # -------------------------------------------------
 
-            income_summary = (
-                df.groupby("Segment")["Income"]
-                .mean()
-                .round(2)
-            )
+        st.subheader("🥧 Segment Distribution")
 
-            st.bar_chart(income_summary)
+        fig = px.pie(
+            segment_summary,
+            names="Segment",
+            values="Customers",
+            title="Customer Distribution by Segment"
+        )
 
-        if "Total_Spend" in df.columns:
-            st.subheader("Average Spending by Segment")
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-            spending_summary = (
-                df.groupby("Segment")["Total_Spend"]
-                .mean()
-                .round(2)
-            )
+        # -------------------------------------------------
+        # DOWNLOAD
+        # -------------------------------------------------
 
-            st.bar_chart(spending_summary)
+        csv = filtered_df.to_csv(index=False)
+
+        st.download_button(
+            label="⬇️ Download Filtered Customer Data",
+            data=csv,
+            file_name="filtered_customer_segments.csv",
+            mime="text/csv"
+        )
 
     else:
+
+        st.error(error_message)
+
+
+# =========================================================
+# SEGMENT ANALYSIS
+# =========================================================
+
+elif page == "Segment Analysis":
+
+    st.title("📊 Segment Analysis")
+
+    if model_loaded:
+
+        # -------------------------------------------------
+        # CUSTOMER DISTRIBUTION
+        # -------------------------------------------------
+
+        st.subheader("Customer Distribution")
+
+        segment_summary = (
+            filtered_df
+            .groupby("Segment")
+            .size()
+            .reset_index(name="Customers")
+        )
+
+        segment_summary["Percentage"] = (
+            segment_summary["Customers"]
+            / len(filtered_df)
+            * 100
+        ).round(2)
+
+        st.dataframe(
+            segment_summary,
+            use_container_width=True
+        )
+
+        # -------------------------------------------------
+        # INCOME CHART
+        # -------------------------------------------------
+
+        if "Income" in filtered_df.columns:
+
+            st.subheader("💰 Average Income by Segment")
+
+            income_summary = (
+                filtered_df
+                .groupby("Segment")["Income"]
+                .mean()
+                .reset_index()
+            )
+
+            income_summary["Income"] = income_summary[
+                "Income"
+            ].round(2)
+
+            fig = px.bar(
+                income_summary,
+                x="Segment",
+                y="Income",
+                title="Average Income by Segment",
+                text="Income"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        # -------------------------------------------------
+        # SPENDING CHART
+        # -------------------------------------------------
+
+        if "Total_Spend" in filtered_df.columns:
+
+            st.subheader("🛍️ Average Spending by Segment")
+
+            spending_summary = (
+                filtered_df
+                .groupby("Segment")["Total_Spend"]
+                .mean()
+                .reset_index()
+            )
+
+            spending_summary["Total_Spend"] = spending_summary[
+                "Total_Spend"
+            ].round(2)
+
+            fig = px.bar(
+                spending_summary,
+                x="Segment",
+                y="Total_Spend",
+                title="Average Spending by Segment",
+                text="Total_Spend"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+        # -------------------------------------------------
+        # AGE CHART
+        # -------------------------------------------------
+
+        if "Age" in filtered_df.columns:
+
+            st.subheader("👤 Average Age by Segment")
+
+            age_summary = (
+                filtered_df
+                .groupby("Segment")["Age"]
+                .mean()
+                .reset_index()
+            )
+
+            age_summary["Age"] = age_summary[
+                "Age"
+            ].round(2)
+
+            fig = px.bar(
+                age_summary,
+                x="Segment",
+                y="Age",
+                title="Average Age by Segment",
+                text="Age"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True
+            )
+
+    else:
+
         st.error(error_message)
 
 
 # =========================================================
 # CUSTOMER PREDICTION
 # =========================================================
+
 elif page == "Customer Prediction":
 
     st.title("🎯 Customer Segment Prediction")
@@ -254,54 +492,140 @@ elif page == "Customer Prediction":
     if model_loaded:
 
         st.info(
-            "Prediction interface will be enhanced during Day 3 "
-            "with customer input fields."
+            "Select a customer from the dataset to view "
+            "its predicted customer segment."
         )
 
-        st.write("Current model:")
+        # Customer search
+        search_text = st.text_input(
+            "🔎 Search Customer",
+            placeholder="Enter customer ID or row number"
+        )
 
-        st.write("**Algorithm:** K-Means")
-        st.write("**Clusters:** 4")
+        display_df = filtered_df.copy()
 
-        st.write("**Selected Features:**")
+        if search_text:
 
-        for feature in selected_features:
-            st.write(f"- {feature}")
+            # Search ID if available
+            if "ID" in display_df.columns:
+
+                display_df = display_df[
+                    display_df["ID"]
+                    .astype(str)
+                    .str.contains(
+                        search_text,
+                        case=False,
+                        na=False
+                    )
+                ]
+
+            else:
+
+                # Search by dataframe index
+                display_df = display_df[
+                    display_df.index
+                    .astype(str)
+                    .str.contains(
+                        search_text,
+                        case=False,
+                        na=False
+                    )
+                ]
+
+        st.subheader("Customer Results")
+
+        st.dataframe(
+            display_df.head(20),
+            use_container_width=True
+        )
+
+        if len(display_df) > 0:
+
+            selected_customer_index = st.selectbox(
+                "Select Customer",
+                display_df.index.tolist()
+            )
+
+            customer = display_df.loc[
+                selected_customer_index
+            ]
+
+            st.subheader("Customer Details")
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric(
+                "Customer Age",
+                customer["Age"]
+                if "Age" in customer
+                else "N/A"
+            )
+
+            col2.metric(
+                "Income",
+                round(customer["Income"], 2)
+                if "Income" in customer
+                else "N/A"
+            )
+
+            col3.metric(
+                "Total Spend",
+                round(customer["Total_Spend"], 2)
+                if "Total_Spend" in customer
+                else "N/A"
+            )
+
+            st.success(
+                f"Predicted Segment: {customer['Segment']}"
+            )
+
+        else:
+
+            st.warning("No customer found.")
 
     else:
+
         st.error(error_message)
 
 
 # =========================================================
 # BUSINESS RECOMMENDATIONS
 # =========================================================
+
 elif page == "Business Recommendations":
 
     st.title("💡 Business Recommendations")
 
     recommendations = {
+
         "Premium Buyers":
-            "Focus on loyalty rewards, premium products and exclusive offers.",
+            "Focus on loyalty rewards, premium products, "
+            "exclusive offers and VIP programs.",
 
         "High-Value Customers":
-            "Use personalized marketing, cross-selling and retention campaigns.",
+            "Use personalized marketing, cross-selling, "
+            "upselling and retention campaigns.",
 
         "Discount Seekers":
-            "Provide discounts, promotions and value-based product bundles.",
+            "Provide discounts, promotions, coupons "
+            "and value-based product bundles.",
 
         "At-Risk Customers":
-            "Use re-engagement campaigns, incentives and personalized offers."
+            "Use re-engagement campaigns, incentives "
+            "and personalized offers."
     }
 
     for segment, recommendation in recommendations.items():
 
         st.subheader(segment)
+
         st.write(recommendation)
 
 
 # =========================================================
 # ABOUT MODEL
 # =========================================================
+
 elif page == "About Model":
 
     st.title("ℹ️ About Model")
@@ -319,4 +643,27 @@ elif page == "About Model":
         st.subheader("Selected Features")
 
         for feature in selected_features:
+
             st.write(f"- {feature}")
+
+        st.subheader("Dashboard Features")
+
+        st.write("✓ Sidebar Navigation")
+        st.write("✓ Customer Filters")
+        st.write("✓ Interactive Plotly Charts")
+        st.write("✓ KPI Cards")
+        st.write("✓ Customer Tables")
+        st.write("✓ Customer Search")
+        st.write("✓ Segment Selection")
+        st.write("✓ CSV Download")
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption(
+    "Customer Segmentation Dashboard | Day 2"
+)
