@@ -480,7 +480,6 @@ elif page == "Segment Analysis":
 
         st.error(error_message)
 
-
 # =========================================================
 # CUSTOMER PREDICTION
 # =========================================================
@@ -491,103 +490,288 @@ elif page == "Customer Prediction":
 
     if model_loaded:
 
-        st.info(
-            "Select a customer from the dataset to view "
-            "its predicted customer segment."
+        st.write(
+            "Enter customer information below. "
+            "The saved StandardScaler and K-Means model "
+            "will automatically predict the customer segment."
         )
 
-        # Customer search
-        search_text = st.text_input(
-            "🔎 Search Customer",
-            placeholder="Enter customer ID or row number"
-        )
+        st.subheader("📝 Customer Information")
 
-        display_df = filtered_df.copy()
+        # -------------------------------------------------
+        # CUSTOMER INPUT FORM
+        # -------------------------------------------------
 
-        if search_text:
-
-            # Search ID if available
-            if "ID" in display_df.columns:
-
-                display_df = display_df[
-                    display_df["ID"]
-                    .astype(str)
-                    .str.contains(
-                        search_text,
-                        case=False,
-                        na=False
-                    )
-                ]
-
-            else:
-
-                # Search by dataframe index
-                display_df = display_df[
-                    display_df.index
-                    .astype(str)
-                    .str.contains(
-                        search_text,
-                        case=False,
-                        na=False
-                    )
-                ]
-
-        st.subheader("Customer Results")
-
-        st.dataframe(
-            display_df.head(20),
-            use_container_width=True
-        )
-
-        if len(display_df) > 0:
-
-            selected_customer_index = st.selectbox(
-                "Select Customer",
-                display_df.index.tolist()
-            )
-
-            customer = display_df.loc[
-                selected_customer_index
-            ]
-
-            st.subheader("Customer Details")
+        with st.form("customer_prediction_form"):
 
             col1, col2, col3 = st.columns(3)
 
-            col1.metric(
-                "Customer Age",
-                customer["Age"]
-                if "Age" in customer
-                else "N/A"
+            with col1:
+
+                income = st.number_input(
+                    "Income",
+                    min_value=0.0,
+                    value=50000.0,
+                    step=1000.0
+                )
+
+                age = st.number_input(
+                    "Age",
+                    min_value=18,
+                    max_value=100,
+                    value=50,
+                    step=1
+                )
+
+                total_spend = st.number_input(
+                    "Total Spend",
+                    min_value=0.0,
+                    value=500.0,
+                    step=50.0
+                )
+
+                recency = st.number_input(
+                    "Recency",
+                    min_value=0,
+                    value=30,
+                    step=1
+                )
+
+                children = st.number_input(
+                    "Children",
+                    min_value=0,
+                    max_value=10,
+                    value=1,
+                    step=1
+                )
+
+            with col2:
+
+                web_purchases = st.number_input(
+                    "Web Purchases",
+                    min_value=0,
+                    value=5,
+                    step=1
+                )
+
+                store_purchases = st.number_input(
+                    "Store Purchases",
+                    min_value=0,
+                    value=5,
+                    step=1
+                )
+
+                catalog_purchases = st.number_input(
+                    "Catalog Purchases",
+                    min_value=0,
+                    value=2,
+                    step=1
+                )
+
+                web_visits = st.number_input(
+                    "Web Visits per Month",
+                    min_value=0,
+                    value=5,
+                    step=1
+                )
+
+                deals_purchases = st.number_input(
+                    "Deals Purchases",
+                    min_value=0,
+                    value=2,
+                    step=1
+                )
+
+            with col3:
+
+                accepted_cmp1 = st.selectbox(
+                    "Accepted Campaign 1",
+                    [0, 1]
+                )
+
+                accepted_cmp2 = st.selectbox(
+                    "Accepted Campaign 2",
+                    [0, 1]
+                )
+
+                accepted_cmp3 = st.selectbox(
+                    "Accepted Campaign 3",
+                    [0, 1]
+                )
+
+                accepted_cmp4 = st.selectbox(
+                    "Accepted Campaign 4",
+                    [0, 1]
+                )
+
+                accepted_cmp5 = st.selectbox(
+                    "Accepted Campaign 5",
+                    [0, 1]
+                )
+
+            predict_button = st.form_submit_button(
+                "🔮 Predict Customer Segment"
             )
 
-            col2.metric(
-                "Income",
-                round(customer["Income"], 2)
-                if "Income" in customer
-                else "N/A"
+        # -------------------------------------------------
+        # PREDICTION
+        # -------------------------------------------------
+
+        if predict_button:
+
+            # Create input dictionary
+            customer_input = {
+
+                "Income": income,
+                "Age": age,
+                "Total_Spend": total_spend,
+                "Recency": recency,
+                "Children": children,
+                "NumWebPurchases": web_purchases,
+                "NumStorePurchases": store_purchases,
+                "NumCatalogPurchases": catalog_purchases,
+                "NumWebVisitsMonth": web_visits,
+                "NumDealsPurchases": deals_purchases,
+                "AcceptedCmp1": accepted_cmp1,
+                "AcceptedCmp2": accepted_cmp2,
+                "AcceptedCmp3": accepted_cmp3,
+                "AcceptedCmp4": accepted_cmp4,
+                "AcceptedCmp5": accepted_cmp5
+            }
+
+            # Convert input to DataFrame
+            input_df = pd.DataFrame(
+                [customer_input]
             )
 
-            col3.metric(
-                "Total Spend",
-                round(customer["Total_Spend"], 2)
-                if "Total_Spend" in customer
-                else "N/A"
+            # Make sure feature order is exactly the same
+            input_df = input_df[selected_features]
+
+            # Apply saved preprocessing
+            input_scaled = scaler.transform(input_df)
+
+            # Generate prediction using trained K-Means model
+            predicted_cluster = kmeans.predict(
+                input_scaled
+            )[0]
+
+            # Convert cluster number to business segment
+            predicted_segment = segment_names.get(
+                predicted_cluster,
+                "Unknown Segment"
             )
+
+            # -------------------------------------------------
+            # DISPLAY RESULT
+            # -------------------------------------------------
 
             st.success(
-                f"Predicted Segment: {customer['Segment']}"
+                "Customer prediction completed successfully!"
             )
 
-        else:
+            st.subheader("🎯 Prediction Result")
 
-            st.warning("No customer found.")
+            result_col1, result_col2 = st.columns(2)
+
+            result_col1.metric(
+                "Predicted Cluster",
+                predicted_cluster
+            )
+
+            result_col2.metric(
+                "Customer Segment",
+                predicted_segment
+            )
+
+            # -------------------------------------------------
+            # SEGMENT CHARACTERISTICS
+            # -------------------------------------------------
+
+            st.subheader("📊 Segment Characteristics")
+
+            segment_data = df[
+                df["Segment"] == predicted_segment
+            ]
+
+            if len(segment_data) > 0:
+
+                char_col1, char_col2, char_col3 = st.columns(3)
+
+                if "Income" in segment_data.columns:
+
+                    char_col1.metric(
+                        "Average Income",
+                        f"{segment_data['Income'].mean():,.2f}"
+                    )
+
+                if "Age" in segment_data.columns:
+
+                    char_col2.metric(
+                        "Average Age",
+                        f"{segment_data['Age'].mean():.1f}"
+                    )
+
+                if "Total_Spend" in segment_data.columns:
+
+                    char_col3.metric(
+                        "Average Spending",
+                        f"{segment_data['Total_Spend'].mean():,.2f}"
+                    )
+
+                st.write(
+                    f"Historical customers belonging to "
+                    f"**{predicted_segment}**: "
+                    f"**{len(segment_data)}**"
+                )
+
+            # -------------------------------------------------
+            # MARKETING RECOMMENDATION
+            # -------------------------------------------------
+
+            st.subheader("💡 Marketing Recommendation")
+
+            recommendations = {
+
+                "Premium Buyers":
+                    "Focus on loyalty rewards, premium products, "
+                    "exclusive offers and VIP programs.",
+
+                "High-Value Customers":
+                    "Use personalized marketing, cross-selling, "
+                    "upselling and retention campaigns.",
+
+                "Discount Seekers":
+                    "Provide discounts, promotions, coupons "
+                    "and value-based product bundles.",
+
+                "At-Risk Customers":
+                    "Use re-engagement campaigns, incentives "
+                    "and personalized offers."
+            }
+
+            recommendation = recommendations.get(
+                predicted_segment,
+                "No recommendation available."
+            )
+
+            st.info(recommendation)
+
+            # -------------------------------------------------
+            # INPUT SUMMARY
+            # -------------------------------------------------
+
+            st.subheader("📋 Customer Input Summary")
+
+            st.dataframe(
+                input_df,
+                use_container_width=True
+            )
 
     else:
 
-        st.error(error_message)
-
-
+        st.error(
+            f"Model Loading Error: {error_message}"
+        )
 # =========================================================
 # BUSINESS RECOMMENDATIONS
 # =========================================================
