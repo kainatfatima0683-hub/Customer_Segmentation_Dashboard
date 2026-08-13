@@ -1,0 +1,154 @@
+DAY 4 — DEFECT REPORT
+=====================
+
+Project: Customer Segmentation Dashboard
+Module: Module 10 — Quality Assurance
+Testing Phase: Functional and Integration Testing
+Date: 2026-08-13
+
+
+1. PURPOSE
+----------
+This defect report documents the issues identified during testing of the
+Customer Segmentation Dashboard and the solutions applied to resolve them.
+
+
+2. DEFECT-01
+-----------
+
+Defect: Streamlit onboarding message appeared on the first application run.
+
+Severity: Low
+Status: Resolved
+
+Issue:
+Streamlit displayed its first-time email and usage statistics message
+when the application was launched.
+
+Solution:
+The onboarding prompt was completed/skipped and the Streamlit application
+continued to run normally.
+
+
+3. DEFECT-02
+-----------
+
+Defect: Model loading issue occurred when testing the full_pipeline.pkl file.
+
+Severity: High
+Status: Resolved / Avoided
+
+Issue:
+The full_pipeline.pkl file produced a ModuleNotFoundError related to
+the feature name/module "Income".
+
+Solution:
+The dashboard was configured to use the separately saved and compatible
+model components:
+
+- selected_features.txt
+- scaler_standard.pkl
+- kmeans_model_fixed.pkl
+
+The application applies the StandardScaler to the selected features
+and then generates predictions using the saved K-Means model.
+
+
+4. DEFECT-03
+-----------
+
+Defect: Initial dashboard page naming mismatch occurred during development.
+
+Severity: Medium
+Status: Resolved
+
+Issue:
+The application initially used "Overview" in the page condition while
+the sidebar navigation used "Home".
+
+Solution:
+The page condition was updated to "Home" so that the sidebar navigation
+and page logic match correctly.
+
+
+5. DEFECT-04
+-----------
+
+Defect: Dashboard initially lacked complete interactive functionality.
+
+Severity: Medium
+Status: Resolved
+
+Issue:
+The initial dashboard contained basic pages but did not provide complete
+filters, interactive charts, customer search and download functionality.
+
+Solution:
+The dashboard was enhanced with:
+
+- Sidebar navigation
+- Segment filter
+- Age filter
+- Income filter
+- Interactive Plotly charts
+- KPI cards
+- Customer search
+- Customer selection
+- CSV download
+- Business recommendations
+
+
+6. DEFECT-05
+-----------
+
+Defect: Customer Prediction page initially displayed only model information.
+
+Severity: Medium
+Status: Resolved
+
+Issue:
+The prediction page initially stated that customer input functionality
+would be added later.
+
+Solution:
+Customer search and selection functionality was added. The application
+uses the existing model-generated segment for the selected customer and
+displays the predicted segment.
+
+
+7. DEFECT-06
+-----------
+
+Defect: Output report files were not initially synchronized correctly
+with Git.
+
+Severity: Low
+Status: Resolved
+
+Issue:
+Output report files were not appearing correctly in the Git repository
+during development.
+
+Solution:
+The output report directory was checked and the required reports were
+added and committed through Git before pushing the final changes.
+
+
+8. DEFECT SUMMARY
+-----------------
+
+Total Defects Identified: 6
+Resolved: 6
+Open: 0
+
+Overall Defect Status: CLOSED
+
+
+9. FINAL QA RESULT
+------------------
+
+All identified defects were resolved or avoided through the final
+dashboard implementation.
+
+The Customer Segmentation Dashboard is considered ready for the
+Documentation & Presentation phase.

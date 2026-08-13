@@ -1,95 +1,165 @@
-CUSTOMER SEGMENTATION DASHBOARD
 DAY 4 — QUALITY ASSURANCE TEST REPORT
+=====================================
 
 Project: Customer Segmentation Dashboard
 Module: Module 10 — Quality Assurance
 Testing Type: Functional and Integration Testing
+Date: 2026-08-13
 
-1. TESTING OBJECTIVE
 
-The objective of Day 4 testing was to verify that the Customer Segmentation Dashboard works correctly after model/application integration.
+1. TEST OBJECTIVE
+------------------
+The objective of Day 4 testing was to verify that the Customer Segmentation
+Dashboard works correctly, loads the trained K-Means model, applies the
+StandardScaler preprocessing, displays customer segments, and provides
+functional dashboard features.
 
-2. TEST CASES
 
-TC-01 — Dashboard Loading
-Expected: Dashboard opens successfully.
+2. TEST ENVIRONMENT
+-------------------
+Operating System: Windows
+IDE: PyCharm
+Programming Language: Python
+Framework: Streamlit
+Streamlit Version: 1.61.1
+Model: K-Means
+Scaler: StandardScaler
+Dataset: cleaned_final.csv
+
+
+3. TEST CASES
+-------------
+
+TC-01: Dashboard Launch
+Expected: Streamlit dashboard should launch successfully.
 Result: PASS
+Status: Dashboard opened successfully using Streamlit.
 
-TC-02 — Sidebar Navigation
-Expected: All dashboard pages open correctly.
+
+TC-02: Dataset Loading
+Expected: cleaned_final.csv should load without errors.
 Result: PASS
+Status: Dataset loaded successfully.
 
-TC-03 — Segment Filter
-Expected: Customer data updates according to selected segment.
+
+TC-03: Selected Features Loading
+Expected: selected_features.txt should load the required features.
 Result: PASS
+Status: 15 selected features loaded successfully.
 
-TC-04 — Age Filter
-Expected: Customers are filtered according to selected age range.
+
+TC-04: Scaler Loading
+Expected: scaler_standard.pkl should load successfully.
 Result: PASS
+Status: StandardScaler loaded successfully.
 
-TC-05 — Income Filter
-Expected: Customers are filtered according to selected income range.
+
+TC-05: K-Means Model Loading
+Expected: kmeans_model_fixed.pkl should load successfully.
 Result: PASS
+Status: K-Means model loaded successfully.
 
-TC-06 — Interactive Charts
-Expected: Charts display customer segmentation information.
+
+TC-06: Cluster Prediction
+Expected: Model should generate cluster predictions for customers.
 Result: PASS
+Status: Cluster predictions generated successfully.
 
-TC-07 — Segment Analysis
-Expected: Income, spending and age analysis are displayed.
+
+TC-07: Segment Mapping
+Expected: Clusters should be mapped to business segment names.
 Result: PASS
+Status: Four customer segments displayed successfully.
 
-TC-08 — Customer Search
-Expected: Customer can be searched using customer ID or row index.
+Segments:
+- Premium Buyers
+- High-Value Customers
+- Discount Seekers
+- At-Risk Customers
+
+
+TC-08: Sidebar Navigation
+Expected: All dashboard pages should be accessible.
 Result: PASS
+Status: Navigation works successfully.
 
-TC-09 — Customer Selection
-Expected: Selected customer details are displayed.
+
+TC-09: Segment Filter
+Expected: User should be able to select a customer segment.
 Result: PASS
+Status: Segment filtering works correctly.
 
-TC-10 — Customer Prediction
-Expected: Customer segment is generated using the trained K-Means model.
+
+TC-10: Age Filter
+Expected: User should be able to filter customers by age.
 Result: PASS
+Status: Age range filter works correctly.
 
-TC-11 — Business Recommendations
-Expected: Marketing recommendations are displayed for customer segments.
+
+TC-11: Income Filter
+Expected: User should be able to filter customers by income.
 Result: PASS
+Status: Income range filter works correctly.
 
-TC-12 — CSV Download
-Expected: Filtered customer data can be downloaded.
+
+TC-12: Interactive Charts
+Expected: Charts should display customer segmentation information.
 Result: PASS
+Status: Plotly charts displayed successfully.
 
-TC-13 — Model Information
-Expected: Model and selected feature information is displayed.
+
+TC-13: KPI Cards
+Expected: Dashboard should display customer statistics.
 Result: PASS
+Status: KPI cards displayed successfully.
 
-TC-14 — Invalid Customer Search
-Expected: Appropriate message is displayed when no customer is found.
+
+TC-14: Customer Search
+Expected: User should be able to search for a customer.
 Result: PASS
+Status: Customer search functionality works.
 
-TC-15 — Model Loading
-Expected: Dataset, scaler and K-Means model load successfully.
+
+TC-15: Customer Segment Display
+Expected: Selected customer segment should be displayed.
 Result: PASS
+Status: Predicted segment displayed successfully.
 
 
-3. INTEGRATION TESTING
-
-The dashboard was tested with the actual trained K-Means model, StandardScaler and selected feature configuration.
-
+TC-16: Business Recommendations
+Expected: Recommendations should be displayed for each segment.
 Result: PASS
+Status: Marketing recommendations displayed successfully.
 
 
-4. DEFECT SUMMARY
+TC-17: CSV Download
+Expected: Filtered customer data should be downloadable.
+Result: PASS
+Status: CSV download functionality works successfully.
 
-Critical Defects: 0
-Major Defects: 0
-Minor Defects: 0
 
-Overall Status: PASS
+TC-18: Model Information
+Expected: About Model page should display model details.
+Result: PASS
+Status: Model information displayed successfully.
+
+
+4. TEST SUMMARY
+----------------
+
+Total Test Cases: 18
+Passed: 18
+Failed: 0
+Blocked: 0
+
+Overall Result: PASS
 
 
 5. CONCLUSION
-
-The Customer Segmentation Dashboard successfully passed the main functional and integration tests. Navigation, filters, charts, customer search, segmentation, recommendations and data download features were verified successfully.
+-------------
+The Customer Segmentation Dashboard successfully passed the functional
+and integration testing performed on Day 4. Dataset loading, preprocessing,
+K-Means prediction, customer segmentation, filtering, visualization,
+customer search, recommendations and download functionality were verified.
 
 The application is ready for final documentation and presentation.
